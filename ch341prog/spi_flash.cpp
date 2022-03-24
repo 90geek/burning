@@ -1,7 +1,5 @@
 #include "stdafx.h"
-
-#include <time.h>
-
+#include "time_api.h"
 #include "ch341.h"
 #include "spi_flash.h"
 
@@ -297,7 +295,8 @@ bool FlashRead(unsigned int addr, unsigned int len, unsigned char *buf)
 {
 	unsigned char op[5];
 	unsigned int flash_offset, len_read, len_to_read, len_left;
-	clock_t start_clock, time_used;
+	// clock_t start_clock, time_used;
+	double time_used;
 
 	if (!len)
 		return true;
@@ -320,7 +319,8 @@ bool FlashRead(unsigned int addr, unsigned int len, unsigned char *buf)
 		return false;
 
 	ProgressInit();
-	start_clock = clock();
+	// start_clock = clock();
+  start_time();
 
 	len_read = 0;
 	len_left = len;
@@ -336,7 +336,8 @@ bool FlashRead(unsigned int addr, unsigned int len, unsigned char *buf)
 		ProgressShow(len_read * 100 / len);
 	}
 
-	time_used = clock() - start_clock;
+	// time_used = clock() - start_clock;
+  time_used = end_time();
 
 	ProgressDone();
 
@@ -371,7 +372,7 @@ static bool FlashEraseSector(unsigned int addr)
 bool FlashErase(unsigned int addr, unsigned int len)
 {
 	unsigned int num_sectors, sector_left, size_erased;
-	clock_t start_clock, time_used;
+	double time_used;
 
 	if (addr % erase_size)
 	{
@@ -395,7 +396,7 @@ bool FlashErase(unsigned int addr, unsigned int len)
 		return false;
 
 	ProgressInit();
-	start_clock = clock();
+	start_time();
 
 	size_erased = 0;
 
@@ -414,12 +415,12 @@ bool FlashErase(unsigned int addr, unsigned int len)
 		ProgressShow(size_erased * 100 / len);
 	}
 
-	time_used = clock() - start_clock;
+	time_used = end_time();
 
 	ProgressDone();
 
 	printf("Time used: %.2fs\n", ((double) time_used) / 1000);
-	printf("Speed: %.2fKiB/s, %.2fsec/s\n", (double) len / (double) time_used, (double) (num_sectors * 1000) / (double) time_used);
+	printf("Speed: %.2fKiB/s, %.2fsectors/s\n", (double) len / (double) time_used, (double) (num_sectors * 1000) / (double) time_used);
 
 	if (!SetAddressMode(0))
 		return false;
@@ -431,7 +432,7 @@ bool FlashChipErase(void)
 {
 	unsigned char cmd;
 	bool ret;
-	clock_t start_clock, time_used;
+	double time_used;
 
 	cmd = SPI_CMD_CHIP_ERASE;
 
@@ -441,11 +442,11 @@ bool FlashChipErase(void)
 	if (!SPIWrite(&cmd, 1))
 		return false;
 
-	start_clock = clock();
+	start_time();
 
 	ret = FlashPoll();
 
-	time_used = clock() - start_clock;
+	time_used = end_time();
 
 	printf("Time used: %.2fs\n", ((double) time_used) / 1000);
 
@@ -479,13 +480,13 @@ static bool FlashPageProgram(unsigned int addr, unsigned char *buff, unsigned in
 	unsigned int bytes_written = 0, bytes_to_write, bytes_left;
 	unsigned int dst;
 	unsigned char *src;
-	clock_t start_clock, time_used;
+	double time_used;
 
 	if (!SetAddressMode(1))
 		return false;
 
 	ProgressInit();
-	start_clock = clock();
+	start_time();
 
 	bytes_left = len;
 	while (bytes_written < len)
@@ -506,7 +507,7 @@ static bool FlashPageProgram(unsigned int addr, unsigned char *buff, unsigned in
 		ProgressShow(bytes_written * 100 / len);
 	}
 
-	time_used = clock() - start_clock;
+	time_used = end_time();
 
 	ProgressDone();
 
@@ -524,10 +525,10 @@ static bool FlashSSTAAIProgram(unsigned int addr, unsigned char *buff, unsigned 
 	unsigned char op[6];
 	unsigned int dst = 0, bytes_written = 0;
 	int addr_sent = 0;
-	clock_t start_clock, time_used;
+	double time_used;
 
 	ProgressInit();
-	start_clock = clock();
+	start_time();
 
 	if (addr % 2)
 	{
@@ -593,7 +594,7 @@ static bool FlashSSTAAIProgram(unsigned int addr, unsigned char *buff, unsigned 
 		dst++;
 	}
 
-	time_used = clock() - start_clock;
+	time_used = end_time();
 
 	ProgressDone();
 

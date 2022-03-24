@@ -4,7 +4,7 @@ HOSTCXX ?= g++
 
 LIBS = -lusb-1.0
 
-OBJS = main.o ch341.o misc.o spi_flash.o spi_ids.o stdafx.o
+OBJS = main.o ch341.o misc.o time_api.o spi_flash.o spi_ids.o stdafx.o
 
 DEPS = $(OBJS:.o=.d)
 
