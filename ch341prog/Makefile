@@ -8,9 +8,9 @@ OBJS = main.o ch341.o misc.o time_api.o spi_flash.o spi_ids.o stdafx.o
 
 DEPS = $(OBJS:.o=.d)
 
-all:	ch341prog
+all:	burning.bin
 
-ch341prog: $(OBJS)
+burning: $(OBJS)
 	@echo "  HOSTLD   " $@
 	$(Q)$(HOSTCXX) $(LDFLAGS) $^ $(LIBS) -o $@$(EXE)
 

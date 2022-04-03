@@ -12,6 +12,7 @@
 
 static int flash_probed;
 static const spi_flash_id *flash_id;
+static spi_flash_id flash_id_temp;
 static unsigned int erase_size;
 static unsigned char erase_op;
 static unsigned char addr_width;
@@ -172,6 +173,61 @@ static bool FlashPoll(void)
 	return true;
 }
 
+/* read the JEDEC ID of the SPI Flash */
+bool Ch341SpiCapacity(void)
+{
+    unsigned char out[JEDEC_ID_LEN];
+    unsigned char in[JEDEC_ID_LEN], *ptr, cap;
+    unsigned int ret;
+
+    ptr = in;
+    *ptr++ = SPI_CMD_RDID; // Read JEDEC ID
+
+    for (int i = 0; i < JEDEC_ID_LEN - 1; ++i)
+        *ptr++ = 0x00;
+
+    // ret = CH341StreamSPI( in, out, JEDEC_ID_LEN);
+    ret = SPIWriteThenRead(in, JEDEC_ID_LEN , out, JEDEC_ID_LEN );
+
+    if (!ret)
+        return false;
+
+    if (! (out[0] == 0xFF && out[0] == 0xFF && out[0] == 0xFF))
+    {
+        printf("Manufacturer ID: %02x\n", out[1]);
+        printf("Memory Type: %02x%02x\n", out[2], out[3]);
+        flash_id_temp.jedec_id = out[0];
+        flash_id_temp.jedec_id = flash_id_temp.jedec_id << 8;
+        flash_id_temp.jedec_id |= out[0];
+        flash_id_temp.jedec_id = flash_id_temp.jedec_id << 8;
+        flash_id_temp.jedec_id |= out[0];
+        flash_id_temp.ext_id = out[0] << 8 | out[0];
+
+        if (out[0x10] == 'Q' && out[0x11] == 'R' && out[0x12] == 'Y')
+        {
+            cap = out[0x28];
+            printf("Reading device capacity from CFI structure\n");
+        }
+        else
+        {
+            cap = out[2];
+            printf("trying to get capacity from device ID\n");
+        }
+        flash_id_temp.model="UnKnow Flash";
+        flash_id_temp.size=1<<cap;
+        flash_id_temp.flags |= SF_4K_SECTOR;
+        erase_op = SPI_CMD_SECTOR_ERASE;
+        erase_size = SECTOR_4KB;
+    }
+    else
+    {
+        printf("Chip not found or missed in ch341a. Check connection\n");
+        return false;
+    }
+    flash_id = &flash_id_temp;
+    return true;
+}
+
 bool FlashProbe(void)
 {
 	unsigned char op = SPI_CMD_RDID;
@@ -239,8 +295,11 @@ bool FlashProbe(void)
 	}
 	else
 	{
-		fprintf(stderr, "Error: unrecognised flash found.\n");
-		return false;
+    if(!Ch341SpiCapacity())
+    {
+		  fprintf(stderr, "Error: unrecognised flash found.jedec_id=0x%x,ext_id=0x%x\n",jedec_id,ext_id);
+		  return false;
+    }
 	}
 
 	if (pre_unlock)

@@ -22,7 +22,11 @@ bool CH341DeviceInit(void)
 		fprintf(stderr, "Error: libusb_init failed: %d (%s)\n", ret, libusb_error_name(ret));
 		return false;
 	}
-
+  #if LIBUSB_API_VERSION < 0x01000106
+      libusb_set_debug(NULL, 3);
+  #else
+      libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_INFO);
+  #endif
 	if (!(CH341DeviceHanlde = libusb_open_device_with_vid_pid(NULL, CH341_USB_VID, CH341_USB_PID)))
 	{
 		fprintf(stderr, "Error: CH341 device (%04x/%04x) not found\n", CH341_USB_VID, CH341_USB_PID);

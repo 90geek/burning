@@ -16,7 +16,8 @@ static void ShowUsage(void)
 		"  probe\n"
 		"  read <file> [<addr> [size]]\n"
 		"  erase [chip | <addr> <size>]\n"
-		"  write [erase] [verify] <file> [addr] [size]\n");
+		"  write [erase] [verify] <file> [addr] [size]\n"
+		"  img <file> \n");
 }
 
 static int DoFlashRead(int argc, char *argv[])
@@ -386,12 +387,165 @@ _insufficinet_param:
 	return 0;
 }
 
+static int DoFlashDeviceBinaryImage(int argc, char *argv[])
+{
+	int need_erase = 0, need_verify = 0, size_set = 0, pass = 1;
+	unsigned int addr = 0, size, filelen, i;
+	const char *filename;
+	unsigned char *buff, *buff_check;
+	FILE *f;
+
+	if (!FlashProbe())
+		return -ENODEV;
+
+	size = FlashGetSize();
+
+	if (!argc)
+	{
+_insufficinet_param:
+		fprintf(stderr, "Error: please specify a filename.\n");
+		return -EINVAL;
+	}
+
+	if (!strcmp(argv[0], "erase"))
+	{
+		need_erase = 1;
+		argc--;
+		argv++;
+	}
+
+	if (!argc)
+		goto _insufficinet_param;
+
+	if (!strcmp(argv[0], "verify"))
+	{
+		need_verify = 1;
+		argc--;
+		argv++;
+	}
+
+	if (!argc)
+		goto _insufficinet_param;
+
+	filename = argv[0];
+
+	argc--;
+	argv++;
+
+	if (argc)
+	{
+		if (!isdigit(argv[0][0]))
+		{
+			fprintf(stderr, "Please input a numeric flash address!\n");
+			return -EINVAL;
+		}
+
+		addr = strtoul(argv[0], NULL, 0);
+
+		if (addr >= FlashGetSize())
+		{
+			fprintf(stderr, "Error: start address exceeds the flash size!\n");
+			return -EINVAL;
+		}
+
+		argc--;
+		argv++;
+
+		if (!argc)
+			size = FlashGetSize() - addr;
+	}
+
+	if (argc)
+	{
+		if (!isdigit(argv[0][0]))
+		{
+			fprintf(stderr, "Please input a numeric size!\n");
+			return -EINVAL;
+		}
+
+		size = strtoul(argv[0], NULL, 0);
+
+		if (addr + size > FlashGetSize())
+		{
+			fprintf(stderr, "Error: end address exceeds the flash size!\n");
+			return -EINVAL;
+		}
+
+		size_set = 1;
+	}
+
+	printf("Reading file %s ...\n", filename);
+
+	f = fopen(filename, "rb");
+	if (!f)
+	{
+		fprintf(stderr, "Error: unable to open file! error %d\n", errno);
+		return -errno;
+	}
+
+	fseek(f, 0, SEEK_END);
+	filelen = ftell(f);
+
+	fseek(f, 0, SEEK_SET);
+
+	if (filelen > size)
+	{
+		fprintf(stderr, "Warning: file size is larger than write size.\n");
+	}
+	else if (filelen < size)
+	{
+		if (size_set)
+			fprintf(stderr, "Warning: write size is larger than file size, write size truncated to 0x%x.\n", filelen);
+		size = filelen;
+	}
+
+	buff = new unsigned char[size];
+	if (!buff)
+	{
+		fprintf(stderr, "Error: unable to allocate memory!\n");
+		return -ENOMEM;
+	}
+
+	if (fread(buff, 1, size, f) != size)
+	{
+		fprintf(stderr, "Error: failed to read file! error %d\n", errno);
+		delete[] buff;
+		return -errno;
+	}
+
+	fclose(f);
+
+	printf("Done.\n\n");
+
+	printf("Erasing entire flash, please wait ...\n");
+	if (!FlashChipErase())
+	{
+		printf("Operation aborted.\n");
+		delete[] buff;
+		return -EFAULT;
+	}
+
+		printf("Done.\n\n");
+
+	printf("Writing flash at %xh, size %xh ...\n", addr, size);
+
+	if (!FlashWrite(addr, buff, size))
+	{
+		printf("Operation aborted.\n");
+		delete[] buff;
+		return -EFAULT;
+	}
+
+	printf("Done.\n");
+
+	return 0;
+}
 int main(int argc, char *argv[])
 {
 	int argv_c = argc - 1, argv_p = 1;
 	int ret = 0;
 
-	printf("Simple CH341 SPI Flash Programmer\nBy HackPascal <hackpascal@gmail.com>\n\n");
+	printf("Simple CH341A SPI Flash Programmer\nBy 90geek <bo90geek@gmail.com>\n\n");
 
 	CH341DeviceInit();
 
@@ -453,6 +607,17 @@ int main(int argc, char *argv[])
 		goto cleanup;
 	}
 
+  if (!strcmp(argv[argv_p], "img"))
+	{
+		argv_c--;
+		argv_p++;
+
+		if (argv_c < 1)
+			goto _show_usage;
+
+		ret = DoFlashDeviceBinaryImage(argv_c, argv + argv_p);
+		goto cleanup;
+	}
 	goto _show_usage;
 
 cleanup:

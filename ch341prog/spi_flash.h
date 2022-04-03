@@ -89,6 +89,7 @@ bool FlashWrite(unsigned int addr, unsigned char *buff, unsigned int len);
 
 #define JEDEC_MFR(_id)				(((_id) >> 16) & 0xff)
 #define JEDEC_SIZE(_id)				((_id) & 0xff)
+#define JEDEC_ID_LEN 0x52    // additional byte due to SPI shift
 
 #define MFR_SST						0xbf
 #define MFR_EON						0x1c
