@@ -3,7 +3,7 @@
 
 #include <memory.h>
 
-#include <libusb-1.0/libusb.h>
+#include "libusb-1.0/libusb.h"
 
 #include "ch341.h"
 

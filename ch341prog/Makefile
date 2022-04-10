@@ -1,29 +1,31 @@
-Q = @
-HOSTCC ?= gcc
-HOSTCXX ?= g++
+include $(SDK_DIR)/burning.mak
 
-LIBS = -lusb-1.0
+LIBS = libch341prog
 
-OBJS = main.o ch341.o misc.o time_api.o spi_flash.o spi_ids.o stdafx.o
+OBJS = ch341_api.o ch341.o misc.o time_api.o spi_flash.o spi_ids.o spi_ids.o
+#===============================================================================
+# rules
+#===============================================================================
+.PHONY: all clean install uninstall
 
-DEPS = $(OBJS:.o=.d)
-
-all:	burning.bin
-
-burning: $(OBJS)
-	@echo "  HOSTLD   " $@
-	$(Q)$(HOSTCXX) $(LDFLAGS) $^ $(LIBS) -o $@$(EXE)
-
-%.o: %.c
-	@echo "  HOSTCC   " $@
-	$(Q)$(HOSTCC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -MF "$(@:.o=.d)" -c $< -o $@
-
-%.o: %.cpp
-	@echo "  HOSTCXX  " $@
-	$(Q)$(HOSTCXX) $(CPPFLAGS) $(CFLAGS) -MMD -MP -MF "$(@:.o=.d)" -c $< -o $@
-
+all:	$(LIBS)
+	
 clean:
-	@echo "  CLEAN    "
-	$(Q)rm -f $(OBJS) $(DEPS) ch341prog ch341prog.exe
+	$(AT)rm -rf $(OBJS)
+	$(AT)rm -rf $(LIBS).a
+	$(AT)rm -rf $(LIBS).so
+	$(AT)rm -rf $(DRV_LIB_OUT)/$(LIBS).a
+	$(AT)rm -rf $(DRV_LIB_OUT)/$(LIBS).so
+	$(AT)rm -rf *~
 
-sinclude $(DEPS)
+$(LIBS) : $(OBJS)
+ifeq ($(LINK_TYPE), static)
+	$(AT)$(AR) -rs $@.a $^
+else
+	$(AT)$(CC) $^ $(CFLAGS) -shared -o $@.so
+endif
+
+install:
+
+uninstall:
+

@@ -2,7 +2,7 @@
 
 #include "spi_flash.h"
 
-const static spi_flash_id flash_ids[] = 
+const spi_flash_id flash_ids[] =
 {
 	{"Atmel AT25DF321A", 0x1f4701, 0, SIZE_4MB, SF_64K_BLOCK | SF_32K_BLOCK | SF_4K_SECTOR | SF_INIT_SR | SF_BP0_3},
 	{"Atmel AT25DF641",  0x1f4800, 0, SIZE_8MB, SF_64K_BLOCK | SF_32K_BLOCK | SF_4K_SECTOR | SF_INIT_SR | SF_BP0_3},

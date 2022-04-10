@@ -83,7 +83,8 @@ static int DoFlashRead(int argc, char *argv[])
 		}
 	}
 
-	buff = new unsigned char[size];
+	// buff = new unsigned char[size];
+	buff = (unsigned char *)malloc(size);
 	if (!buff)
 	{
 		fprintf(stderr, "Error: unable to allocate memory!\n");
@@ -95,7 +96,8 @@ static int DoFlashRead(int argc, char *argv[])
 	if (!FlashRead(addr, size, buff))
 	{
 		printf("Operation failed.\n");
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -EFAULT;
 	}
 
@@ -105,14 +107,16 @@ static int DoFlashRead(int argc, char *argv[])
 	if (!f)
 	{
 		fprintf(stderr, "Error: unable to open/create file! error %d\n", errno);
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -errno;
 	}
 
 	if (fwrite(buff, 1, size, f) != size)
 	{
 		fprintf(stderr, "Error: failed to write to file! error %d\n", errno);
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -errno;
 	}
 
@@ -303,7 +307,8 @@ _insufficinet_param:
 		size = filelen;
 	}
 
-	buff = new unsigned char[size];
+	// buff = new unsigned char[size];
+	buff = (unsigned char *)malloc(size);
 	if (!buff)
 	{
 		fprintf(stderr, "Error: unable to allocate memory!\n");
@@ -313,7 +318,8 @@ _insufficinet_param:
 	if (fread(buff, 1, size, f) != size)
 	{
 		fprintf(stderr, "Error: failed to read file! error %d\n", errno);
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -errno;
 	}
 
@@ -328,7 +334,8 @@ _insufficinet_param:
 		if (!FlashErase(addr, size))
 		{
 			printf("Operation aborted.\n");
-			delete[] buff;
+			// delete[] buff;
+      free(buff);
 			return -EFAULT;
 		}
 
@@ -340,7 +347,8 @@ _insufficinet_param:
 	if (!FlashWrite(addr, buff, size))
 	{
 		printf("Operation aborted.\n");
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -EFAULT;
 	}
 
@@ -350,7 +358,8 @@ _insufficinet_param:
 	{
 		printf("\n");
 
-		buff_check = new unsigned char[size];
+		// buff_check = new unsigned char[size];
+	  buff_check = (unsigned char *)malloc(size);
 		if (!buff_check)
 		{
 			fprintf(stderr, "Error: unable to allocate memory!\n");
@@ -362,8 +371,10 @@ _insufficinet_param:
 		if (!FlashRead(addr, size, buff_check))
 		{
 			printf("Operation failed.\n");
-			delete[] buff;
-			delete[] buff_check;
+			// delete[] buff;
+			// delete[] buff_check;
+      free(buff);
+      free(buff_check);
 			return -EFAULT;
 		}
 
@@ -499,7 +510,8 @@ _insufficinet_param:
 		size = filelen;
 	}
 
-	buff = new unsigned char[size];
+	// buff = new unsigned char[size];
+	buff = (unsigned char *)malloc(size);
 	if (!buff)
 	{
 		fprintf(stderr, "Error: unable to allocate memory!\n");
@@ -509,7 +521,8 @@ _insufficinet_param:
 	if (fread(buff, 1, size, f) != size)
 	{
 		fprintf(stderr, "Error: failed to read file! error %d\n", errno);
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -errno;
 	}
 
@@ -521,7 +534,8 @@ _insufficinet_param:
 	if (!FlashChipErase())
 	{
 		printf("Operation aborted.\n");
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -EFAULT;
 	}
 
@@ -532,7 +546,8 @@ _insufficinet_param:
 	if (!FlashWrite(addr, buff, size))
 	{
 		printf("Operation aborted.\n");
-		delete[] buff;
+		// delete[] buff;
+    free(buff);
 		return -EFAULT;
 	}
 
@@ -540,7 +555,7 @@ _insufficinet_param:
 
 	return 0;
 }
-int main(int argc, char *argv[])
+int ch341_start(int argc, char *argv[])
 {
 	int argv_c = argc - 1, argv_p = 1;
 	int ret = 0;

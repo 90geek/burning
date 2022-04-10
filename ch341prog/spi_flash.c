@@ -63,7 +63,7 @@ static bool WriteDisable(void)
 	return SPIWrite(&op, 1);
 }
 
-static bool ReadStatusRegister(unsigned int &sr)
+static bool ReadStatusRegister(unsigned int *sr)
 {
 	unsigned char op = SPI_CMD_RDSR;
 	unsigned char val;
@@ -71,7 +71,7 @@ static bool ReadStatusRegister(unsigned int &sr)
 	if (!SPIWriteThenRead(&op, 1, &val, 1))
 		return false;
 
-	sr = val;
+	*sr = val;
 	return true;
 }
 
@@ -166,7 +166,7 @@ static bool FlashPoll(void)
 
 	do
 	{
-		if (!ReadStatusRegister(sr))
+		if (!ReadStatusRegister(&sr))
 			return false;
 	} while (sr & 1);
 
@@ -311,7 +311,7 @@ bool FlashProbe(void)
 	}
 	else if (flash_id && flash_id->flags & SF_BP_ALL)
 	{
-		if (!ReadStatusRegister(sr))
+		if (!ReadStatusRegister(&sr))
 			return false;
 
 		if (flash_id->flags & SF_BP0_2)
