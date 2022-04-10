@@ -1,15 +1,16 @@
 
-# ifeq ($(PLATFORM), hisi)
-# TOOLCHAIN_DIR = $(SDK_DIR)/../toolchain/hisi/arm-histbv310-linux
-# export TOOLCHAIN_PREFIX = ${TOOLCHAIN_DIR}/bin/arm-histbv310-linux
+ifeq ($(PLATFORM), host)
+TOOLCHAIN_DIR = /bin/
+else ifeq ($(PLATFORM), mips64el)
+TOOLCHAIN_DIR = /home/zhubo/loongson/toolchain/opt/mips-loongson-gcc4.9-linux-gnu/2019.08-05
+export TOOLCHAIN_PREFIX = ${TOOLCHAIN_DIR}/bin/mips-linux-gnu-
 # else ifeq ($(PLATFORM), mstar)
 # TOOLCHAIN_DIR = $(SDK_DIR)/../toolchain/mstar/mips-2014.05
 # export TOOLCHAIN_PREFIX = ${TOOLCHAIN_DIR}/bin/mips-linux-gnu
 # else 
 # $(error PLATFORM not define) 
-# endif
+endif
 
-TOOLCHAIN_DIR = /bin/
 CC := $(TOOLCHAIN_PREFIX)gcc
 CXX := $(TOOLCHAIN_PREFIX)g++
 AR=$(TOOLCHAIN_PREFIX)ar
