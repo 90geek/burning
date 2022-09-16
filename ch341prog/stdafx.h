@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 extern const unsigned char BitSwapTable[256];
 void ProgressInit(void);
