@@ -34,7 +34,6 @@ LINK_TYPE = static
 CFLAGS :=
 SUBDIRS := ch341prog
 LIBPATH := -L$(SDK_DIR)/ch341prog
-LIBPATH += -L$(SDK_DIR)/lib/usb-1.0/x64
 LIB :=
 #########################################################################
 # 
@@ -43,6 +42,15 @@ LIB += -lrt -lm -lpthread -lstdc++ -ldl
 LIB += -lch341prog
 LIB += -lusb-1.0 -ludev
 
+ifeq ($(PLATFORM), host)
+  ifeq ($(uname -m), x86_64)
+    LIBPATH += -L$(SDK_DIR)/lib/usb-1.0/x64
+  else ifeq ($(uname -m), loongarch64)
+    LIBPATH += -L$(SDK_DIR)/lib/usb-1.0/loongarch64
+  else
+    LIBPATH += -L$(SDK_DIR)/lib/usb-1.0/loongarch64
+  endif
+endif
 
 CFLAGS += -Wl,--gc-sections  -O0 -g 
 CFLAGS += -Wno-implicit-fallthrough
